@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const task = new Schema(
+const contacts = new Schema(
   {
     name: {
       type: String,
@@ -18,9 +18,9 @@ const task = new Schema(
       default: false,
     },
   },
-  { versionKey: false, timestamps: true }
+  { versionKey: false, timestamps: false }
 );
 
-const Task = mongoose.model('task', task);
+const Contacts = mongoose.model('contacts', contacts);
 
-module.exports = Task;
+module.exports = Contacts;
