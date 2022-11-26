@@ -1,122 +1,32 @@
-const express = require('express');
 require('dotenv').config();
+const express = require('express');
 
+const { tryCatchWrapper } = require('../../helpers/errorHandler');
+const { authMiddleware } = require('../../middlewares/authMiddleware');
+// const {  } = require('../../service');
 const {
-  getAlltasks,
+  getContacts,
   getContactById,
   addContact,
   removeContact,
   updateContact,
   updateStatusContact,
-} = require('../../service');
-
-const validation = require('../../validation/validation');
+} = require('../../controllers/contactsController');
 
 const router = express.Router();
 
-router.get('/', async (req, res, next) => {
-  const contacts = await getAlltasks();
-  console.log(contacts);
-  res.json({
-    status: 'success',
-    code: 200,
-    data: { contacts },
-  });
-});
+router.use(authMiddleware);
 
-router.get('/:id', async (req, res, next) => {
-  const contact = await getContactById(req.params.id);
-  contact
-    ? res.json({
-        status: 'success',
-        code: 200,
-        data: { contact },
-      })
-    : res.json({
-        status: 'success',
-        code: 404,
-        message: 'Not found',
-      });
-});
+router.get('/', tryCatchWrapper(getContacts));
 
-router.post('/', async (req, res, next) => {
-  const validationResult = validation.schemaContact.validate(req.body);
-  if (validationResult.error) {
-    return res.json({
-      status: validationResult.error.details[0].message,
-      code: 400,
-      message: 'missing required name field',
-    });
-  }
-  const contact = await addContact(req.body);
-  res.json({
-    status: 'success',
-    code: 201,
-    data: { contact },
-  });
-});
+router.get('/:id', tryCatchWrapper(getContactById));
 
-router.delete('/:id', async (req, res, next) => {
-  const response = await removeContact(req.params.id);
-  response
-    ? res.json({
-        status: 'success',
-        code: 200,
-        message: 'contact deleted',
-      })
-    : res.json({
-        status: 'Not found',
-        code: 404,
-        message: 'Not found',
-      });
-});
+router.post('/', tryCatchWrapper(addContact));
 
-router.put('/:id', async (req, res, next) => {
-  const validationResult = validation.schemaContact.validate(req.body);
-  if (validationResult.error) {
-    return res.json({
-      status: validationResult.error.details[0].message,
-      code: 400,
-      message: 'missing fields',
-    });
-  }
-  const contact = await updateContact(req.params.id, req.body);
-  console.log(contact);
-  contact
-    ? res.json({
-        status: 'success',
-        code: 200,
-        data: { contact },
-      })
-    : res.json({
-        status: 'Not found',
-        code: 404,
-        message: 'Not found',
-      });
-});
+router.delete('/:id', tryCatchWrapper(removeContact));
 
-router.patch('/:id/favorite', async (req, res, next) => {
-  const validationResult = validation.schemaFavorite.validate(req.body);
-  if (validationResult.error) {
-    return res.json({
-      status: validationResult.error.details[0].message,
-      code: 400,
-      message: 'missing field favorite',
-    });
-  }
-  const contact = await updateStatusContact(req.params.id, req.body);
-  console.log(contact);
-  contact
-    ? res.json({
-        status: 'success',
-        code: 200,
-        data: { contact },
-      })
-    : res.json({
-        status: 'Not found',
-        code: 404,
-        message: 'Not found',
-      });
-});
+router.put('/:id', tryCatchWrapper(updateContact));
+
+router.patch('/:id/favorite', tryCatchWrapper(updateStatusContact));
 
 module.exports = router;
