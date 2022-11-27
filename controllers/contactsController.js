@@ -1,31 +1,20 @@
-const express = require('express');
-require('dotenv').config();
+const { required } = require('joi');
+const Contacts = require('../service/schemas/contacts');
+const validation = require('../validation/validation');
 
-const {
-  getAlltasks,
-  getContactById,
-  addContact,
-  removeContact,
-  updateContact,
-  updateStatusContact,
-} = require('../../service');
-
-const validation = require('../../validation/validation');
-
-const router = express.Router();
-
-router.get('/', async (req, res, next) => {
-  const contacts = await getAlltasks();
-  console.log(contacts);
+const getContacts = async (req, res, next) => {
+  console.log(req.user);
+  const contacts = await Contacts.find({ owner: req.user._id });
+  // console.log(contacts);
   res.json({
     status: 'success',
     code: 200,
     data: { contacts },
   });
-});
+};
 
-router.get('/:id', async (req, res, next) => {
-  const contact = await getContactById(req.params.id);
+const getContactById = async (req, res, next) => {
+  const contact = await Contacts.findOne({ _id: req.params.id, owner: req.user._id });
   contact
     ? res.json({
         status: 'success',
@@ -37,9 +26,9 @@ router.get('/:id', async (req, res, next) => {
         code: 404,
         message: 'Not found',
       });
-});
+};
 
-router.post('/', async (req, res, next) => {
+const addContact = async (req, res, next) => {
   const validationResult = validation.schemaContact.validate(req.body);
   if (validationResult.error) {
     return res.json({
@@ -48,16 +37,17 @@ router.post('/', async (req, res, next) => {
       message: 'missing required name field',
     });
   }
-  const contact = await addContact(req.body);
+  const { name, email, phone, favorite } = req.body;
+  const contact = await Contacts.create({ name, email, phone, favorite, owner: req.user._id });
   res.json({
     status: 'success',
     code: 201,
-    data: { contact },
+    data: { name, email, phone, favorite },
   });
-});
+};
 
-router.delete('/:id', async (req, res, next) => {
-  const response = await removeContact(req.params.id);
+const removeContact = async (req, res, next) => {
+  const response = await Contacts.findByIdAndRemove({ _id: req.params.id, owner: req.user._id });
   response
     ? res.json({
         status: 'success',
@@ -69,9 +59,9 @@ router.delete('/:id', async (req, res, next) => {
         code: 404,
         message: 'Not found',
       });
-});
+};
 
-router.put('/:id', async (req, res, next) => {
+const updateContact = async (req, res, next) => {
   const validationResult = validation.schemaContact.validate(req.body);
   if (validationResult.error) {
     return res.json({
@@ -80,7 +70,14 @@ router.put('/:id', async (req, res, next) => {
       message: 'missing fields',
     });
   }
-  const contact = await updateContact(req.params.id, req.body);
+  const { name, email, phone, favorite } = req.body;
+  const contact = await Contacts.findByIdAndUpdate(
+    { _id: req.params.id, owner: req.user._id },
+    { name, email, phone, favorite, owner: req.user._id },
+    {
+      new: true,
+    }
+  );
   console.log(contact);
   contact
     ? res.json({
@@ -93,9 +90,9 @@ router.put('/:id', async (req, res, next) => {
         code: 404,
         message: 'Not found',
       });
-});
+};
 
-router.patch('/:id/favorite', async (req, res, next) => {
+const updateStatusContact = async (req, res, next) => {
   const validationResult = validation.schemaFavorite.validate(req.body);
   if (validationResult.error) {
     return res.json({
@@ -104,7 +101,7 @@ router.patch('/:id/favorite', async (req, res, next) => {
       message: 'missing field favorite',
     });
   }
-  const contact = await updateStatusContact(req.params.id, req.body);
+  const contact = await Contacts.findByIdAndUpdate({ _id: req.params.id }, req.body, { new: true });
   console.log(contact);
   contact
     ? res.json({
@@ -117,6 +114,12 @@ router.patch('/:id/favorite', async (req, res, next) => {
         code: 404,
         message: 'Not found',
       });
-});
-
-module.exports = router;
+};
+module.exports = {
+  getContacts,
+  getContactById,
+  addContact,
+  removeContact,
+  updateContact,
+  updateStatusContact,
+};
