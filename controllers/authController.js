@@ -1,17 +1,20 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const gravatar = require('gravatar');
 const User = require('../service/schemas/users');
 
 const register = async (req, res, next) => {
-  const { email, password } = req.body;
+  const { email, password, subscription } = req.body;
   const conflictCheck = await User.findOne({ email });
 
   if (conflictCheck) {
     return res.status(409).json({ message: 'Email in use' });
   }
 
+  const secureUrl = gravatar.url(email, { s: '100', r: 'x', d: 'retro' }, true);
+
   try {
-    const user = new User({ email, password });
+    const user = new User({ email, password, subscription, avatarURL: secureUrl });
 
     await user.save();
     return res.status(201).json({
@@ -19,6 +22,7 @@ const register = async (req, res, next) => {
         user: {
           email,
           subscription: user.subscription,
+          avatarURL: secureUrl,
         },
       },
     });
@@ -62,4 +66,10 @@ const currentUser = async (req, res, next) => {
   return res.status(200).json({ email: user.email, subscription: user.subscription });
 };
 
-module.exports = { register, login, logout, currentUser };
+const changeAvatar = async (req, res, next) => {
+  const avatarURL = req.file.path;
+  await User.findByIdAndUpdate({ _id: req.user._id }, { avatarURL });
+  return res.status(200).json({ avatarURL });
+};
+
+module.exports = { register, login, logout, currentUser, changeAvatar };

@@ -1,9 +1,17 @@
 const express = require('express');
-const { register, login, logout, currentUser } = require('../../controllers/authController');
+require('dotenv').config();
+const {
+  register,
+  login,
+  logout,
+  currentUser,
+  changeAvatar,
+} = require('../../controllers/authController');
 const { tryCatchWrapper } = require('../../helpers/errorHandler');
 const { authMiddleware } = require('../../middlewares/authMiddleware');
 const { authValidation } = require('../../middlewares/authValidation');
-require('dotenv').config();
+const upload = require('../../middlewares/multerMiddleware');
+const { editAvatar } = require('../../middlewares/avatarMiddleware');
 
 const router = express.Router();
 
@@ -11,5 +19,12 @@ router.post('/signup', authValidation, tryCatchWrapper(register));
 router.post('/login', authValidation, tryCatchWrapper(login));
 router.get('/logout', authMiddleware, tryCatchWrapper(logout));
 router.get('/current', authMiddleware, tryCatchWrapper(currentUser));
+router.patch(
+  '/avatars',
+  authMiddleware,
+  upload.single('avatar'),
+  editAvatar,
+  tryCatchWrapper(changeAvatar)
+);
 
 module.exports = router;

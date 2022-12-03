@@ -1,4 +1,3 @@
-const { required } = require('joi');
 const Contacts = require('../service/schemas/contacts');
 const validation = require('../validation/validation');
 
@@ -38,7 +37,7 @@ const addContact = async (req, res, next) => {
     });
   }
   const { name, email, phone, favorite } = req.body;
-  const contact = await Contacts.create({ name, email, phone, favorite, owner: req.user._id });
+  await Contacts.create({ name, email, phone, favorite, owner: req.user._id });
   res.json({
     status: 'success',
     code: 201,
