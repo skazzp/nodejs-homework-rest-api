@@ -6,6 +6,8 @@ const {
   logout,
   currentUser,
   changeAvatar,
+  verifyUser,
+  verificationRetry,
 } = require('../../controllers/authController');
 const { tryCatchWrapper } = require('../../helpers/errorHandler');
 const { authMiddleware } = require('../../middlewares/authMiddleware');
@@ -26,5 +28,7 @@ router.patch(
   editAvatar,
   tryCatchWrapper(changeAvatar)
 );
+router.get('/verify/:verificationToken', tryCatchWrapper(verifyUser));
+router.post('/verify', tryCatchWrapper(verificationRetry));
 
 module.exports = router;

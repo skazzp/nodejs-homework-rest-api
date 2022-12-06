@@ -21,8 +21,16 @@ const users = new Schema({
     type: String,
     default: null,
   },
-  avatarURL:{
+  avatarURL: {
     type: String,
+  },
+  verify: {
+    type: Boolean,
+    default: false,
+  },
+  verificationToken: {
+    type: String,
+    required: [true, 'Verify token is required'],
   },
 });
 
